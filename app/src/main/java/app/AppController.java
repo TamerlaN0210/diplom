@@ -1,4 +1,4 @@
-package app.AppController;
+package app;
 
 /**
  * Created by user on 08.04.2017.
@@ -15,8 +15,7 @@ import utils.LruBitmapCache.LruBitmapCache;
 
 public class AppController extends Application {
 
-    public static final String TAG = AppController.class
-            .getSimpleName();
+    public static final String TAG = AppController.class.getSimpleName();
 
     private RequestQueue mRequestQueue;
     private ImageLoader mImageLoader;
