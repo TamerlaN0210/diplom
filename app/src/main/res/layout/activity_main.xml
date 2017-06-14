@@ -7,11 +7,13 @@
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"
         android:gravity="center"
-        android:orientation="vertical" >
+        android:orientation="vertical"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/linearLayout2">
 
         <TextView
             android:layout_width="wrap_content"
@@ -33,16 +35,38 @@
             android:layout_height="wrap_content"
             android:textSize="13dp" />
 
-        <Button
-            android:id="@+id/btnLogout"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="40dip"
-            android:background="@color/btn_logut_bg"
-            android:text="@string/btn_logout"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="15dp" />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/btnLogout"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@color/btn_logut_bg"
+        android:text="@string/btn_logout"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="15dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:id="@+id/buttonQRcheck"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="@string/QRcheck"
+        android:layout_below="@+id/linearLayout2"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:id="@+id/buttonPoint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/buttonQRcheck"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="31dp"
+        android:text="addpoint" />
 
 </RelativeLayout>

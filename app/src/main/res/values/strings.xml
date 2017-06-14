@@ -2,6 +2,7 @@
     <string name="app_name">Diplom</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="title_activity_login">Sign in</string>
+    <string name="title_activity_check_qr">QR-Сканер</string>
 
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
@@ -15,16 +16,16 @@
     <string name="permission_rationale">"Contacts permissions are needed for providing email
         completions."</string>
 
+    <string name="hint_id">Id</string>
     <string name="hint_email">Email</string>
     <string name="hint_password">Password</string>
     <string name="hint_name">Fullname</string>
     <string name="btn_login">LOGIN</string>
-    <string name="btn_register">REGISTER</string>
-    <string name="btn_link_to_register">Not a member? Sign up now.</string>
-    <string name="btn_link_to_login">Already registred! Login Me.</string>
     <string name="welcome">Welcome</string>
     <string name="btn_logout">LOGOUT</string>
     <string name="name">Fullname</string>
     <string name="title_activity_stand_by">StandByActivity</string>
     <string name="take_picture">make photo</string>
+    <string name="QRcheck">Check QR-code</string>
+    <string name="title_activity_camera">camera</string>
 </resources>

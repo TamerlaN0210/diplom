@@ -38,10 +38,9 @@ import helper.SessionManager;
 import timur.diplom.R;
 
 public class LoginActivity extends Activity {
-    private static final String TAG = RegisterActivity.class.getSimpleName();
+    private static final String TAG = LoginActivity.class.getSimpleName();
     private Button btnLogin;
-    private Button btnLinkToRegister;
-    private EditText inputEmail;
+    private EditText inputId;
     private EditText inputPassword;
     private ProgressDialog pDialog;
     private SessionManager session;
@@ -52,10 +51,9 @@ public class LoginActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        inputEmail = (EditText) findViewById(R.id.email);
+        inputId = (EditText) findViewById(R.id.id);
         inputPassword = (EditText) findViewById(R.id.password);
         btnLogin = (Button) findViewById(R.id.btnLogin);
-        btnLinkToRegister = (Button) findViewById(R.id.btnLinkToRegisterScreen);
 
         // Progress dialog
         pDialog = new ProgressDialog(this);
@@ -79,13 +77,13 @@ public class LoginActivity extends Activity {
         btnLogin.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
-                String email = inputEmail.getText().toString().trim();
+                String uid = inputId.getText().toString().trim();
                 String password = inputPassword.getText().toString().trim();
 
                 // Check for empty data in the form
-                if (!email.isEmpty() && !password.isEmpty()) {
+                if (!uid.isEmpty() && !password.isEmpty()) {
                     // login user
-                    checkLogin(email, password);
+                    checkLogin(uid, password);
                 } else {
                     // Prompt user to enter credentials
                     Toast.makeText(getApplicationContext(),
@@ -95,24 +93,12 @@ public class LoginActivity extends Activity {
             }
 
         });
-
-        // Link to Register Screen
-        btnLinkToRegister.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View view) {
-                Intent i = new Intent(getApplicationContext(),
-                        RegisterActivity.class);
-                startActivity(i);
-                finish();
-            }
-        });
-
     }
 
     /**
      * function to verify login details in mysql db
      * */
-    private void checkLogin(final String email, final String password) {
+    private void checkLogin(final String uid, final String password) {
         // Tag used to cancel the request
         String tag_string_req = "req_login";
 
@@ -139,15 +125,11 @@ public class LoginActivity extends Activity {
 
                         // Now store the user in SQLite
                         String uid = jObj.getString("uid");
-
-                        JSONObject user = jObj.getJSONObject("user");
-                        String name = user.getString("name");
-                        String email = user.getString("email");
-                        String created_at = user
-                                .getString("created_at");
+                        String name = jObj.getString("fio");
+                        String companyID = jObj.getString("companyID");
 
                         // Inserting row in users table
-                        db.addUser(name, email, uid, created_at);
+                        db.addUser(uid, name, companyID);
 
                         // Launch main activity
                         Intent intent = new Intent(LoginActivity.this,
@@ -173,7 +155,7 @@ public class LoginActivity extends Activity {
             public void onErrorResponse(VolleyError error) {
                 Log.e(TAG, "Login Error: " + error.getMessage());
                 Toast.makeText(getApplicationContext(),
-                        error.getMessage(), Toast.LENGTH_LONG).show();
+                        error.getMessage(), Toast.LENGTH_SHORT).show();
                 hideDialog();
             }
         }) {
@@ -182,9 +164,8 @@ public class LoginActivity extends Activity {
             protected Map<String, String> getParams() {
                 // Posting parameters to login url
                 Map<String, String> params = new HashMap<String, String>();
-                params.put("email", email);
+                params.put("id", uid);
                 params.put("password", password);
-
                 return params;
             }
 

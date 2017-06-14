@@ -22,6 +22,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Size;
@@ -31,6 +32,8 @@ import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import com.google.zxing.Result;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -42,8 +45,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import me.dm7.barcodescanner.zxing.ZXingScannerView;
 
-public class camera extends AppCompatActivity {
+public class Camera extends AppCompatActivity implements ZXingScannerView.ResultHandler{
+    private ZXingScannerView mScannerView;
     private static final String TAG = "AndroidCameraApi";
     private Button takePictureButton;
     private TextureView textureView;
@@ -66,6 +71,23 @@ public class camera extends AppCompatActivity {
     private boolean mFlashSupported;
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
+
+    @Override
+    public void handleResult(Result rawResult) {
+        // Do something with the result here
+        Log.v("TAG", rawResult.getText()); // Prints scan results
+        // Prints the scan format (qrcode, pdf417 etc.)
+        Log.v("TAG", rawResult.getBarcodeFormat().toString());
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Scan Result");
+        builder.setMessage(rawResult.getText());
+        AlertDialog alert1 = builder.create();
+        alert1.show();
+
+        // If you would like to resume scanning, call this method below:
+        mScannerView.resumeCameraPreview(this);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,6 +103,12 @@ public class camera extends AppCompatActivity {
                 takePicture();
             }
         });
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(Camera.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CAMERA_PERMISSION);
+            return;
+        }
+        mScannerView = new ZXingScannerView(this);
+        setContentView(mScannerView);
     }
     TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
         @Override
@@ -122,7 +150,7 @@ public class camera extends AppCompatActivity {
         @Override
         public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
             super.onCaptureCompleted(session, request, result);
-            Toast.makeText(camera.this, "Saved:" + file, Toast.LENGTH_SHORT).show();
+            Toast.makeText(Camera.this, "Saved:" + file, Toast.LENGTH_SHORT).show();
             createCameraPreview();
         }
     };
@@ -207,7 +235,7 @@ public class camera extends AppCompatActivity {
                 @Override
                 public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
                     super.onCaptureCompleted(session, request, result);
-                    Toast.makeText(camera.this, "Saved:" + file, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(Camera.this, "Saved:" + file, Toast.LENGTH_SHORT).show();
                     createCameraPreview();
                 }
             };
@@ -249,7 +277,7 @@ public class camera extends AppCompatActivity {
                 }
                 @Override
                 public void onConfigureFailed(@NonNull CameraCaptureSession cameraCaptureSession) {
-                    Toast.makeText(camera.this, "Configuration change", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(Camera.this, "Configuration change", Toast.LENGTH_SHORT).show();
                 }
             }, null);
         } catch (CameraAccessException e) {
@@ -267,7 +295,7 @@ public class camera extends AppCompatActivity {
             imageDimension = map.getOutputSizes(SurfaceTexture.class)[0];
             // Add permission for camera and let user grant the permission
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(camera.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CAMERA_PERMISSION);
+                ActivityCompat.requestPermissions(Camera.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CAMERA_PERMISSION);
                 return;
             }
             manager.openCamera(cameraId, stateCallback, null);
@@ -302,7 +330,7 @@ public class camera extends AppCompatActivity {
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
             if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
                 // close the app
-                Toast.makeText(camera.this, "Sorry!!!, you can't use this app without granting permission", Toast.LENGTH_LONG).show();
+                Toast.makeText(Camera.this, "Sorry!!!, you can't use this app without granting permission", Toast.LENGTH_LONG).show();
                 finish();
             }
         }
@@ -311,18 +339,22 @@ public class camera extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         Log.e(TAG, "onResume");
-        startBackgroundThread();
-        if (textureView.isAvailable()) {
+        mScannerView.setResultHandler(this);
+        // Start camera on resume
+        mScannerView.startCamera();
+        //startBackgroundThread();
+        /*if (textureView.isAvailable()) {
             openCamera();
         } else {
             textureView.setSurfaceTextureListener(textureListener);
-        }
+        }*/
     }
     @Override
     protected void onPause() {
         Log.e(TAG, "onPause");
         //closeCamera();
-        stopBackgroundThread();
         super.onPause();
+        mScannerView.stopCamera();
+        //stopBackgroundThread();
     }
 }
