@@ -7,6 +7,8 @@ package activity;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -29,6 +31,7 @@ public class MainActivity extends Activity {
     private Button btnLogout;
     private Button btnQRcheck;
     private Button btnAddPoint;
+    private String message;
 
     private SQLiteHandler db;
     private SessionManager session;
@@ -43,12 +46,25 @@ public class MainActivity extends Activity {
         btnLogout = (Button) findViewById(R.id.btnLogout);
         btnQRcheck = (Button) findViewById(R.id.buttonQRcheck);
         btnAddPoint = (Button) findViewById(R.id.buttonPoint);
+        message = new String("error");
 
         // SqLite database handler
         db = new SQLiteHandler(getApplicationContext());
 
         // session manager
         session = new SessionManager(getApplicationContext());
+        if(getIntent().getStringExtra("message") != null) {
+            message = getIntent().getStringExtra("message");
+            Log.d(TAG, message);
+        }
+        if(!message.equals("error")){
+            Log.d(TAG, "intent has been invited");
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Сообщение");
+            builder.setMessage(message);
+            AlertDialog alert1 = builder.create();
+            alert1.show();
+        }
 
         if (!session.isLoggedIn()) {
             logoutUser();

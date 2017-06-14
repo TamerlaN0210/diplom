@@ -2,6 +2,7 @@ package timur.diplom;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
@@ -22,7 +23,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Size;
@@ -33,7 +33,14 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
 import com.google.zxing.Result;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -43,8 +50,14 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import activity.MainActivity;
+import app.AppConfig;
+import app.AppController;
+import helper.SQLiteHandler;
 import me.dm7.barcodescanner.zxing.ZXingScannerView;
 
 public class Camera extends AppCompatActivity implements ZXingScannerView.ResultHandler{
@@ -71,6 +84,7 @@ public class Camera extends AppCompatActivity implements ZXingScannerView.Result
     private boolean mFlashSupported;
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
+    private SQLiteHandler db;
 
     @Override
     public void handleResult(Result rawResult) {
@@ -78,14 +92,16 @@ public class Camera extends AppCompatActivity implements ZXingScannerView.Result
         Log.v("TAG", rawResult.getText()); // Prints scan results
         // Prints the scan format (qrcode, pdf417 etc.)
         Log.v("TAG", rawResult.getBarcodeFormat().toString());
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        /*AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Scan Result");
         builder.setMessage(rawResult.getText());
         AlertDialog alert1 = builder.create();
-        alert1.show();
-
+        alert1.show();*/
+        HashMap<String, String> user = db.getUserDetails();
+        sendResult(user.get("uid"), user.get("companyID"), rawResult.getText());
         // If you would like to resume scanning, call this method below:
-        mScannerView.resumeCameraPreview(this);
+
+        //mScannerView.resumeCameraPreview(this);
     }
 
     @Override
@@ -97,6 +113,7 @@ public class Camera extends AppCompatActivity implements ZXingScannerView.Result
         textureView.setSurfaceTextureListener(textureListener);
         takePictureButton = (Button) findViewById(R.id.btn_takepicture);
         assert takePictureButton != null;
+        db = new SQLiteHandler(getApplicationContext());
         takePictureButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -336,6 +353,14 @@ public class Camera extends AppCompatActivity implements ZXingScannerView.Result
         }
     }
     @Override
+    public void onBackPressed() {
+        // super.onBackPressed();
+        Intent intent = new Intent(Camera.this, MainActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         Log.e(TAG, "onResume");
@@ -356,5 +381,55 @@ public class Camera extends AppCompatActivity implements ZXingScannerView.Result
         super.onPause();
         mScannerView.stopCamera();
         //stopBackgroundThread();
+    }
+    protected void sendResult(final String uid, final String cid, final String qrcode){
+        String tag_string_req = "req_check";
+
+        StringRequest strReq = new StringRequest(Request.Method.POST,
+                AppConfig.URL_CHECK, new Response.Listener<String>() {
+
+            @Override
+            public void onResponse(String response) {
+                Log.d(TAG, "Login Response: " + response.toString());
+                try {
+                    JSONObject jObj = new JSONObject(response);
+                    boolean error = jObj.getBoolean("error");
+                    if(!error){
+                        Intent intent = new Intent(Camera.this, MainActivity.class);
+                        intent.putExtra("message", jObj.getString("message"));
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        Toast.makeText(Camera.this, jObj.getString("message"),Toast.LENGTH_SHORT).show();
+                        mScannerView.resumeCameraPreview(Camera.this);
+                    }
+                } catch (JSONException e) {
+                    Log.e(TAG, "JSON error: " + e.toString());
+                }
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e(TAG, "Login Error: " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }) {
+
+            @Override
+            protected Map<String, String> getParams() {
+                // Posting parameters to login url
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("uid", uid);
+                params.put("cid", cid);
+                params.put("qrcode", qrcode);
+                return params;
+            }
+
+        };
+
+        // Adding request to request queue
+        AppController.getInstance().addToRequestQueue(strReq, tag_string_req);
     }
 }
